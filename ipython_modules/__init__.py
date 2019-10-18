@@ -4,6 +4,7 @@ import inspect
 import logging
 
 from functools import wraps
+from collections.abc import MutableMapping
 
 from IPython.core.magic import Magics, magics_class, line_magic
 from IPython.terminal.prompts import Prompts, Token
@@ -13,22 +14,21 @@ from . import rpc
 
 __version__ = '0.1.0'
 
-
-PROTECTED_VARS = [
-]
-
-
-def var_should_be_ignored(name):
-    return re.match(r'^_i*', name) or name == '_' or re.match(r'^_\d+', name)
+shell = None
+MAIN_LAYER = {}
 
 
-def clear(variables):
-    """This function clears '__main__' module before variables from
-       a new module will be loaded into it.
+def ipython_var(name):
+    """Variables which ipython sets on each cell evaluation:
+
+    _, __, ___, _1, _2
+    _i, _ii, _iii, _i1, _i2
     """
-    for key in list(variables):
-        if key not in PROTECTED_VARS and not var_should_be_ignored(key):
-            del variables[key]
+    return re.match(r'^[_]+$', name) \
+        or re.match(r'^_[i]+$', name) \
+        or re.match(r'^_i\d+$', name) \
+        or re.match(r'^_\d+$', name)
+
 
 def check():
     return inspect.stack()
@@ -45,7 +45,7 @@ def find_changes(before, after):
     deleted = {}
 
     for key, value in after.items():
-        if not var_should_be_ignored(key):
+        if not ipython_var(key):
             if key in before:
                 prev_value = before[key]
                 if prev_value is not value:
@@ -54,7 +54,7 @@ def find_changes(before, after):
                 new[key] = value
 
     for key, value in before.items():
-        if not var_should_be_ignored(key):
+        if not ipython_var(key):
             if key not in after:
                 deleted[key] = value
 
@@ -84,6 +84,10 @@ def update_namespace(module, new, updated, deleted):
             for key, value in vars(module).items():
                 if value is old_value:
                     setattr(module, key, new_value)
+
+        for key, value in MAIN_LAYER.items():
+            if value is old_value:
+                MAIN_LAYER[key] = new_value
 
 
 @magics_class
@@ -138,21 +142,10 @@ class ModuleManager(Magics):
     @line_magic('in')
     def in_module(self, name):
         if name in sys.modules:
-            new_module = sys.modules[name]
-            variables = self.shell.user_ns
-
             if self.debug:
                 print(f"Switching from {variables['__name__']} to {new_module.__name__}")
 
-            clear(variables)
-            variables.update(vars(new_module))
-            variables['__name__'] = name
-
-            # We need to store a module here, to update
-            # it on subsequent code evaluations.
-            # We do updates in update_namespace function
-            variables['__module__'] = new_module
-
+            self.shell.user_ns.set_module(name)
         else:
             print(f'Module "{name}" not found')
 
@@ -191,30 +184,85 @@ class ModulePrompts(Prompts):
         return self.add_prefix(super().in_prompt_tokens())
 
     def out_prompt_tokens(self):
-        # print('Updating OUT 2 primopmt', self.shell)
         return self.add_prefix(super().out_prompt_tokens())
 
     def add_prefix(self, prompt):
-        # print('adding prefix to', prompt)
         prompt.insert(0, (Token.Prompt, '> '))
         prompt.insert(0, (Token.Prompt, self.shell.user_ns['__name__']))
         return prompt
 
 
-shell = None
+class Namespace(MutableMapping):
+    def __init__(self, initial_dict):
+        self._ipython = initial_dict
+        self._layer = MAIN_LAYER
+
+    def __getitem__(self, name):
+        if name in self._layer:
+            return self._layer[name]
+        return self._ipython[name]
+
+    def __setitem__(self, name, value):
+        if ipython_var(name):
+            self._ipython[name] = value
+        else:
+            # If variable is in the module, then we
+            # set it there (unless it is a special ipython's variable
+            if name in self._layer:
+               self._layer[name] = value
+            else:
+                if name in self._ipython:
+                    self._ipython[name] = value
+                else:
+                    # If name is not in ipython namespace,
+                    # then we'll add it into the module vars
+                    self._layer[name] = value
+
+    def copy(self):
+        result = self._ipython.copy()
+        result.update(self._layer)
+        return result
+
+    def __iter__(self):
+        names = set(self._ipython)
+        names |= set(self._layer)
+        return iter(names)
+
+    def __delitem__(self, name):
+        if name in self._layer:
+            del self._layer[name]
+        if name in self._ipython:
+            del self._ipython[name]
+
+    def __len__(self):
+        names = set(self._ipython)
+        names |= set(self._layer)
+        return len(names)
+
+    def set_module(self, name):
+        new_module = sys.modules[name]
+
+        self._ipython['__name__'] = name
+        # We need to store a module here, to update
+        # it on subsequent code evaluations.
+        # We do updates in update_namespace function
+        self._ipython['__module__'] = new_module
+
+        if name == '__main__':
+            self._layer = MAIN_LAYER
+        else:
+            self._layer = vars(new_module)
+
 
 def load_ipython_extension(ipython):
     global shell
-    # The `ipython` argument is the currently active `InteractiveShell`
-    # instance, which can be used in any way. This allows you to register
-    # new magics or aliases, for example.
-    PROTECTED_VARS.extend(ipython.user_ns)
-
+    ipython.user_ns = Namespace(ipython.user_ns)
     ipython.prompts = ModulePrompts(ipython)
     shell = ipython
 
     extension = ModuleManager(ipython)
     ipython.register_magics(extension)
+    extension.in_module('__main__')
 
 
 def unload_ipython_extension(ipython):
