@@ -164,7 +164,7 @@ class ModuleManager(Magics):
                 port = int(line)
             
         rpc.start(host=host, port=port)
-        print(f'Server was started. Connect to {host}:{port} now.')
+        print(f'Server was started. Load remote-ipython.el in Emacs, and hit C-c C-c on any function definition.')
 
     @line_magic('debug-module')
     def debug_module(self, *args, **kwargs):
