@@ -1,4 +1,4 @@
-from ipython_modules.utils import upgrade_class
+from therepl.utils import upgrade_class
 
 
 def test_class_upgrade():

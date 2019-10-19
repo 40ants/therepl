@@ -1,4 +1,4 @@
-from ipython_modules import __version__
+from therepl import __version__
 
 
 def test_version():

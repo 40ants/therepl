@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "ipython-modules"
+name = "therepl"
 version = "0.1.0"
-description = "IPython extension to switch and edit python modules on fly."
+description = "IPython extension to switch and edit python modules on fly either from the repl or from IDE."
 authors = ["Alexander Artemenko <svetlyak.40wt@gmail.com>"]
 license = "MIT"
 

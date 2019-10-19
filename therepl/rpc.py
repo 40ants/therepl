@@ -24,13 +24,13 @@ def eval_code():
 @app.route('/switch', methods=['POST'])
 def switch():
     import flask
-    import ipython_modules
+    import therepl
     
     if not flask.request.content_type.startswith('plain/text'):
         abort(400, 'Plain/text body was expected.')
 
     module_name = flask.request.data.decode('utf-8').strip()
-    ipython_modules.shell.run_line_magic('in', module_name)
+    therepl.shell.run_line_magic('in', module_name)
     return 'OK'
 
 
@@ -39,8 +39,8 @@ def process_eval():
         abort(400, 'Plain/text body was expected.')
     code = request.data.decode('utf-8')
 
-    import ipython_modules
-    ipython_modules.shell.run_cell(code, in_module=request.args.get('in-module'))
+    import therepl
+    therepl.shell.run_cell(code, in_module=request.args.get('in-module'))
     return 'OK'
 
 

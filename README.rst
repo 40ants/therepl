@@ -1,6 +1,6 @@
-=================
- ipython-modules
-=================
+==========
+ The REPL
+==========
 
 This is an extension for ipython. It adds following features.
 
@@ -20,29 +20,23 @@ This is an extension for ipython. It adds following features.
 How to use
 ==========
 
-* Install: ``pip install ipython_modules``.
+* Install: ``pip install therepl``.
 * Run ``ipython``.
-* Load the extension: ``%load_ext ipython_modules``.
-* Switch to a module you want to change:
+* Load the extension: ``%load_ext therepl``.
+* Switch to a module you want with ``%in <the-module>`` magic command.
+* Eval the code like you want to change:
 
-  .. code:: python
+  .. image:: docs/therepl-demo.gif
 
 
+Development
+===========
 
-            In [1]: %load_ext ipython_modules
+To start hacking the repl itself:
 
-__main__> In [2]: %in os
+* install poetry_ package manager.
+* do ``poetry install`` in the repl's folder.
+* do ``poetry shell`` and start the ``ipython``.
 
-os> In [3]: def getcwd():
-       ...:     return 'Oh really!?'
-       ...:
 
-os> In [4]: getcwd()
-os> Out[4]: 'Oh really!?'
-
-os> In [5]: %in __main__
-
-__main__> In [6]: import os
-
-__main__> In [7]: os.getcwd()
-__main__> Out[7]: 'Oh really!?'
+.. _poetry: https://github.com/sdispater/poetry
