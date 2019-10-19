@@ -2,7 +2,14 @@
  The REPL
 ==========
 
-This is an extension for ipython. It adds following features.
+This is an extension for ipython.
+
+It's goal is to make iterative "image-based" development possible.
+This way of development is able to increase programmer's productivity.
+
+
+Features
+========
 
 * A command ``%in <module-name>`` allowing to switch current namespace
   to a given python module.
