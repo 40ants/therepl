@@ -29,6 +29,17 @@ How to use
   .. image:: docs/therepl-demo.gif
 
 
+Connecting from the Emacs
+=========================
+
+* In ipython's repl execute ``%listen`` command.
+* Load into your emacs `therepl.el`_.
+* With cursor on a function definition, hit ``C-c C-c`` to eval it
+  in the ipython. Code will be evaled in the module corresponding to
+  the python file.
+* To switch REPL into the module of the current file, hit ``C-c v``.
+  
+
 Development
 ===========
 
@@ -39,4 +50,12 @@ To start hacking the repl itself:
 * do ``poetry shell`` and start the ``ipython``.
 
 
+Roadmap
+=======
+
+* Make a emacs minor mode.
+* Add proper error handling in RPC protocol.
+* Create an extension for PyCharm.
+
 .. _poetry: https://github.com/sdispater/poetry
+.. _therepl.el: https://github.com/40ants/therepl/blob/master/therepl.el
