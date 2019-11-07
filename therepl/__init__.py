@@ -11,6 +11,7 @@ from IPython.terminal.prompts import Prompts, Token
 
 from .utils import upgrade_objects
 from . import rpc
+from .log import logger
 
 __version__ = '0.1.0'
 
@@ -122,7 +123,7 @@ class ModuleManager(Magics):
             if not code.startswith('%in '):
                 new, updated, deleted = find_changes(vars_before, module_globals)
                 update_namespace(
-                    module_globals.get('__module__'),
+                    self.shell.user_ns.get('__module__'),
                     new,
                     updated,
                     deleted,
@@ -143,7 +144,7 @@ class ModuleManager(Magics):
     def in_module(self, name):
         if name in sys.modules:
             if self.debug:
-                print(f"Switching from {variables['__name__']} to {new_module.__name__}")
+                print(f"Switching from {self.shell.user_ns['__name__']} to {name}")
 
             self.shell.user_ns.set_module(name)
         else:
@@ -168,11 +169,13 @@ class ModuleManager(Magics):
 
     @line_magic('debug-module')
     def debug_module(self, *args, **kwargs):
-        logger = logging.getLogger("werkzeug")
+        werkzeug_logger = logging.getLogger("werkzeug")
         if self.debug:
+            werkzeug_logger.setLevel(logging.ERROR)
             logger.setLevel(logging.ERROR)
             print(f'Debug mode is off')
         else:
+            werkzeug_logger.setLevel(logging.DEBUG)
             logger.setLevel(logging.DEBUG)
             print(f'Debug mode is on')
 
@@ -246,6 +249,7 @@ class Namespace(MutableMapping):
         # We need to store a module here, to update
         # it on subsequent code evaluations.
         # We do updates in update_namespace function
+        logger.error(f'Setting __module__ to {new_module}')
         self._ipython['__module__'] = new_module
 
         if name == '__main__':

@@ -3,10 +3,15 @@
          (url (concat "http://localhost:5005/eval?in-module="
                       current-module) )
          (url-request-method "POST")
-         (url-request-data code)
+         (url-request-data
+           (encode-coding-string code 'utf-8))
          (url-request-extra-headers '(("Content-Type" . "plain/text"))))
-    (with-current-buffer (url-retrieve-synchronously url)
-      (prog1 (buffer-string)
+    (with-current-buffer (url-retrieve-synchronously url t t 5)
+      (goto-char (point-min))
+      (search-forward-regexp "^$")
+      (next-line)
+      (prog1
+        (string-trim (buffer-substring-no-properties (point) (point-max)))
         (kill-buffer)))))
 
 
@@ -30,9 +35,11 @@ non-nil, forces display of a user-friendly message if there's no
 process running; defaults to t when called interactively."
   (interactive
    (list (region-beginning) (region-end) current-prefix-arg t))
-  (let* ((string (python-shell-buffer-substring start end (not send-main))))
-    (ipython-eval string)
-    (message "")))
+  (let* ((string (python-shell-buffer-substring start end (not send-main)))
+         (result (ipython-eval string)))
+    (if (string= result "OK")
+        (message "Success")
+      (error "%s" result))))
 
 
 (defun get-beginning-of-defun ()

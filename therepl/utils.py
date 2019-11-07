@@ -1,5 +1,8 @@
 import gc
 
+from .log import logger
+
+
 def upgrade_class(obj, old_class, new_class):
     if obj.__class__ is old_class:
         obj.__class__ = new_class
@@ -34,5 +37,7 @@ def find_objs(cls):
 
 
 def upgrade_objects(from_class, to_class):
+    logger.error(f'Upgrading from {from_class} (id {id(from_class)}) to {to_class} (id {id(to_class)})')
+
     for obj in find_objs(from_class):
         upgrade_class(obj, from_class, to_class)

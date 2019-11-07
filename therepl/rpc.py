@@ -1,28 +1,33 @@
 import logging
 import threading
+import traceback
 
 from time import sleep
 from werkzeug.serving import run_simple
 from flask import Flask, request, abort
 
-app = Flask(__name__)
+from .log import logger
 
+app = Flask(__name__)
 
 THREAD = None
 
 
 @app.route('/')
 def index():
+    logger.debug('GET /index/')
     return 'Use /eval Luke!'
 
 
 @app.route('/eval', methods=['POST'])
 def eval_code():
+    logger.debug('POST /eval')
     return process_eval()
 
 
 @app.route('/switch', methods=['POST'])
 def switch():
+    logger.debug('POST /switch')
     import flask
     import therepl
     
@@ -35,13 +40,20 @@ def switch():
 
 
 def process_eval():
+    import traceback
+    
     if not request.content_type.startswith('plain/text'):
         abort(400, 'Plain/text body was expected.')
     code = request.data.decode('utf-8')
-
+    logger.debug('Evaling code: {}'.format(code))
     import therepl
-    therepl.shell.run_cell(code, in_module=request.args.get('in-module'))
-    return 'OK'
+    try:
+        therepl.shell.run_cell(code, in_module=request.args.get('in-module'))
+    except:
+        logger.exception('Unable to eval code')
+        return traceback.format_exc()
+    else:
+        return 'OK'
 
 
 def start(host='localhost', port=5005, in_thread=True):
