@@ -13,7 +13,7 @@ from .utils import upgrade_objects
 from . import rpc
 from .log import logger
 
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 
 shell = None
 MAIN_LAYER = {}
