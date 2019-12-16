@@ -226,6 +226,12 @@ class Namespace(MutableMapping):
         result.update(self._layer)
         return result
 
+    def __repr__(self):
+        keys = list(self)
+        keys.sort()
+        keys = ', '.join(keys)
+        return f'<therepl.Namespace keys={keys}>'
+
     def __iter__(self):
         names = set(self._ipython)
         names |= set(self._layer)
@@ -267,6 +273,7 @@ def load_ipython_extension(ipython):
     extension = ModuleManager(ipython)
     ipython.register_magics(extension)
     extension.in_module('__main__')
+    # ipython.run_cell('%listen')
 
 
 def unload_ipython_extension(ipython):

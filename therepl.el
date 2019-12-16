@@ -72,7 +72,7 @@ optional argument MSG is non-nil, forces display of a
 user-friendly message if there's no process running; defaults to
 t when called interactively."
   (interactive (list current-prefix-arg t))
-  (save-excursion
+  (save-mark-and-excursion
     (ipython-send-region
      (get-beginning-of-defun)
      (get-end-of-defun)

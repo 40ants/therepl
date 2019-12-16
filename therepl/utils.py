@@ -5,6 +5,7 @@ from .log import logger
 
 def upgrade_class(obj, old_class, new_class):
     if obj.__class__ is old_class:
+        logger.info(f'Upgrading __class__ for {obj}')
         obj.__class__ = new_class
     else:
         mro = obj.__class__.mro()
@@ -32,12 +33,13 @@ def find_objs(cls):
     return [
         obj
         for obj in gc.get_objects()
+        # for obj in gc.get_referrers(cls)
         if isinstance(obj, cls)
     ]
 
 
 def upgrade_objects(from_class, to_class):
-    logger.error(f'Upgrading from {from_class} (id {id(from_class)}) to {to_class} (id {id(to_class)})')
+    logger.info(f'Upgrading from {from_class} (id {id(from_class)}) to {to_class} (id {id(to_class)})')
 
     for obj in find_objs(from_class):
         upgrade_class(obj, from_class, to_class)
